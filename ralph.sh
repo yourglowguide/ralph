@@ -11,7 +11,8 @@ set -e
 
 # Parse arguments
 TOOL="claude"  # Default to Claude Code
-MAX_ITERATIONS=10
+MAX_ITERATIONS=""  # Empty = auto-detect from task count
+USER_SET_ITERATIONS=false
 
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -27,6 +28,7 @@ while [[ $# -gt 0 ]]; do
       # Assume it's max_iterations if it's a number
       if [[ "$1" =~ ^[0-9]+$ ]]; then
         MAX_ITERATIONS="$1"
+        USER_SET_ITERATIONS=true
       fi
       shift
       ;;
@@ -174,7 +176,20 @@ if [ "$EPIC_COUNT" -gt 1 ]; then
   echo ""
 fi
 
-echo "Starting Ralph - Tool: $TOOL - Max iterations: $MAX_ITERATIONS"
+# Count open tasks (excluding Patterns bead which has priority 0)
+TASK_COUNT=$(bd list --parent "$EPIC_ID" --status open --json 2>/dev/null | \
+  jq -r '[.[] | select(.priority != 0 and .priority != "0")] | length' || echo "0")
+
+# Auto-detect max iterations from task count if not specified
+if [ -z "$MAX_ITERATIONS" ] || [ "$USER_SET_ITERATIONS" = false ]; then
+  if [ "$TASK_COUNT" -gt 0 ]; then
+    MAX_ITERATIONS="$TASK_COUNT"
+  else
+    MAX_ITERATIONS=1  # At least try once
+  fi
+fi
+
+echo "Starting Ralph - Tool: $TOOL - Tasks: $TASK_COUNT - Max iterations: $MAX_ITERATIONS"
 echo "Working directory: $WORK_DIR"
 echo "Epic: $EPIC_ID"
 echo "Branch: $BRANCH"

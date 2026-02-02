@@ -237,18 +237,18 @@ ralph [OPTIONS] [MAX_ITERATIONS]
 |--------|-------------|---------|
 | `--tool claude` | Use Claude Code | Default |
 | `--tool amp` | Use Amp CLI | - |
-| `[number]` | Max iterations before stopping | 10 |
+| `[number]` | Max iterations before stopping | Auto (task count) |
 
 ### Examples
 
 ```bash
-# Run with defaults (Claude Code, 10 iterations)
+# Run with defaults (Claude Code, iterations = task count)
 ralph
 
 # Run with Amp
 ralph --tool amp
 
-# Run up to 20 iterations
+# Override max iterations (e.g., if tasks might spawn subtasks)
 ralph 20
 
 # Run with Amp, max 5 iterations
@@ -521,7 +521,7 @@ A: Claude Code has a single context window. When it fills up, it loses track of 
 
 **Q: How many tasks can Ralph handle?**
 
-A: There's no hard limit. Ralph will run until all tasks are closed or it hits max iterations (default 10). For large features, use `ralph 50` or higher.
+A: There's no hard limit. Ralph auto-detects the number of open tasks and uses that as max iterations. You can override with `ralph 50` if needed.
 
 **Q: Can I pause and resume Ralph?**
 
