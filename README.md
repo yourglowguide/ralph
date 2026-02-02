@@ -37,11 +37,12 @@ brew install jq                            # JSON processor
 cp ralph.sh ~/bin/ralph && chmod +x ~/bin/ralph
 mkdir -p ~/.config/ralph && cp prompt.md CLAUDE.md ~/.config/ralph/
 
-# 3. In your project, create tasks with Claude Code
+# 3. In your project root, create tasks with Claude Code
+cd ~/my-project  # Must be at repo root
 claude
 > /ralph   # Then describe your feature and let it create beads
 
-# 4. Run Ralph
+# 4. Run Ralph (from repo root)
 ralph
 ```
 
@@ -84,7 +85,7 @@ Install Ralph once and use it with any repository:
 
 ```bash
 # 1. Clone the Ralph repository
-git clone https://github.com/snarktank/ralph.git
+git clone git@github.com:yourglowguide/ralph.git
 cd ralph
 
 # 2. Copy the ralph command to your PATH
@@ -121,11 +122,13 @@ Then restart your terminal or run `source ~/.bashrc`.
 
 ### Step 1: Start a New Feature
 
-Navigate to your project repository:
+Navigate to the **root** of your project repository:
 
 ```bash
-cd ~/my-project
+cd ~/my-project  # Must be at repo root
 ```
+
+**Important:** Ralph must be run from the root of your git repository. It uses the current working directory to find beads, create commits, and manage the `.ralph-*` files.
 
 ### Step 2: Create a PRD (Product Requirements Document)
 
@@ -224,6 +227,7 @@ Review the changes, then merge your feature branch.
 ### Basic Usage
 
 ```bash
+cd ~/my-project   # Run from your repo root
 ralph [OPTIONS] [MAX_ITERATIONS]
 ```
 
@@ -409,14 +413,18 @@ Each criterion must be **verifiable**, not vague.
 
 ### "No active Ralph epic found"
 
-**Cause:** No epic with `branchName` in the design field exists.
+**Cause:** Either no epic exists, or you're not in the right directory.
 
 **Solution:**
 ```bash
+# Make sure you're at your repo root
+cd ~/my-project
+pwd  # Verify you're in the right place
+
 # Check what epics exist
 bd list --type epic --status open
 
-# Create one using the /ralph skill in Claude Code
+# If no epics, create one using the /ralph skill in Claude Code
 claude
 > /ralph
 > Convert my-prd.md to beads
@@ -598,9 +606,9 @@ bd sync                                # Save to disk
 
 ### Flowchart
 
-[![Ralph Flowchart](ralph-flowchart.png)](https://snarktank.github.io/ralph/)
+[![Ralph Flowchart](ralph-flowchart.png)](https://yourglowguide.github.io/ralph/)
 
-**[View Interactive Flowchart](https://snarktank.github.io/ralph/)**
+**[View Interactive Flowchart](https://yourglowguide.github.io/ralph/)**
 
 ### External Links
 
