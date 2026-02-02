@@ -1,6 +1,7 @@
 # Ralph working files (per-repo, generated during runs)
 .ralph-epic
 .ralph-archive/
+.beads/
 
 # Legacy files (replaced by beads)
 prd.json
