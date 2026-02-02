@@ -52,6 +52,7 @@ LAST_EPIC_FILE="$WORK_DIR/.ralph-epic"
 # Function to get the active Ralph epic
 get_ralph_epic() {
   # Find epic with branchName in design field (marks it as a Ralph epic)
+  # bd list returns array of objects
   bd list --type epic --status open --json 2>/dev/null | \
     jq -r '.[] | select(.design != null and (.design | test("branchName:"))) | .id' | head -1
 }
@@ -59,8 +60,9 @@ get_ralph_epic() {
 # Function to get branch name from epic
 get_epic_branch() {
   local epic_id="$1"
+  # bd show returns array even for single item, so use .[0]
   bd show "$epic_id" --json 2>/dev/null | \
-    jq -r '.design // ""' | \
+    jq -r '(if type == "array" then .[0] else . end) | .design // ""' | \
     sed -n 's/.*branchName: *\([^ ]*\).*/\1/p'
 }
 
@@ -147,7 +149,7 @@ if [ -f "$LAST_EPIC_FILE" ]; then
 
   if [ -n "$LAST_EPIC" ] && [ "$LAST_EPIC" != "$EPIC_ID" ]; then
     # Check if old epic still exists and is open
-    OLD_STATUS=$(bd show "$LAST_EPIC" --json 2>/dev/null | jq -r '.status // "unknown"' || echo "unknown")
+    OLD_STATUS=$(bd show "$LAST_EPIC" --json 2>/dev/null | jq -r '(if type == "array" then .[0] else . end) | .status // "unknown"' || echo "unknown")
     if [ "$OLD_STATUS" == "open" ]; then
       OLD_BRANCH=$(get_epic_branch "$LAST_EPIC")
       archive_epic "$LAST_EPIC" "$OLD_BRANCH"
