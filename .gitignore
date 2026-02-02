@@ -1,7 +1,12 @@
-# Ralph working files (generated during runs)
+# Ralph working files (per-repo, generated during runs)
+.ralph-epic
+.ralph-archive/
+
+# Legacy files (replaced by beads)
 prd.json
 progress.txt
 .last-branch
+.last-epic
 
 # Archive is optional to commit
 # archive/
@@ -9,5 +14,5 @@ progress.txt
 # OS files
 .DS_Store
 
-#Claude
+# Claude
 .claude/
