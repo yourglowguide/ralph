@@ -25,10 +25,48 @@ Epic: "Ralph: <project> - <description>"
   ├── metadata (design field): branchName: ralph/<feature-name>
   ├── Task: "Patterns & Memory" (priority 0, stays open)
   │     └── notes: "## Codebase Patterns\n\n(Patterns discovered during implementation)"
-  ├── Task: "US-001: <title>" (priority 1)
+  ├── Task: "US-001: <title>" (priority 2)
   ├── Task: "US-002: <title>" (priority 2)
   └── ...
 ```
+
+---
+
+## Priority System (IMPORTANT)
+
+Beads priorities are **importance levels**, NOT sequential task IDs. Valid values are **0-4 only**:
+
+| Priority | Meaning | Usage |
+|----------|---------|-------|
+| **0** | Reserved/Special | Used ONLY for "Patterns & Memory" bead - never auto-picked by `bd ready` |
+| **1** | Critical | Blocking issues, must be done first |
+| **2** | Normal (default) | Standard tasks - **use this for most stories** |
+| **3** | Low | Nice-to-have, can wait |
+| **4** | Backlog | Future work, lowest priority |
+
+### Key Rules:
+- **Multiple tasks can have the same priority** - this is normal and expected
+- **`bd ready` handles ordering** within the same priority (by creation order, dependencies, etc.)
+- **Do NOT increment priorities** for each story (1, 2, 3, 4, 5... is WRONG)
+- **Priority 5+ does not exist** - it will cause an error
+
+### Correct Usage:
+```bash
+# Patterns bead - priority 0 (special, never auto-picked)
+bd create "Patterns & Memory" --priority 0 --parent "$EPIC_ID" ...
+
+# All normal stories - priority 2 (or 1 if critical)
+bd create "US-001: Add status field" --priority 2 --parent "$EPIC_ID" ...
+bd create "US-002: Display badge" --priority 2 --parent "$EPIC_ID" ...
+bd create "US-003: Add toggle" --priority 2 --parent "$EPIC_ID" ...
+# ... even 20 stories can all be priority 2
+```
+
+### When to Use Different Priorities:
+- Use **priority 1** for foundational work that MUST happen before anything else (schema migrations)
+- Use **priority 2** for all standard feature work
+- Use **priority 3** for optional enhancements or polish
+- Use dependencies (`--deps`) for task ordering, NOT priority numbers
 
 ---
 
@@ -59,11 +97,11 @@ bd create "Patterns & Memory" \
 
 (Gotchas and useful context will be added here)"
 
-# Create task beads for each user story
+# Create task beads for each user story (use priority 2 for all normal stories)
 bd create "US-001: $TITLE" \
   --type task \
   --parent "$EPIC_ID" \
-  --priority 1 \
+  --priority 2 \
   --description "$DESCRIPTION" \
   --acceptance "- Criterion 1
 - Criterion 2
@@ -152,7 +190,9 @@ Frontend stories are NOT complete until visually verified. Ralph will use the de
 
 1. **Each user story becomes one task bead**
 2. **IDs**: Sequential in title (US-001, US-002, etc.)
-3. **Priority**: Based on dependency order, then document order (starting at 1)
+3. **Priority**: Use **priority 2** for all normal stories (NOT incrementing numbers!)
+   - Exception: Use priority 1 for critical foundational work (schema migrations)
+   - Use dependencies (`--deps`) to enforce ordering, not priority values
 4. **branchName**: Derive from feature name, kebab-case, prefixed with `ralph/`
 5. **Always add**: "Typecheck passes" to every story's acceptance criteria
 6. **Always create**: A "Patterns & Memory" task with priority 0
@@ -214,6 +254,7 @@ bd create "Patterns & Memory" \
 
 (Gotchas and useful context will be added here)"
 
+# Schema migration is foundational - use priority 1
 bd create "US-001: Add status field to tasks table" \
   --type task \
   --parent "$EPIC_ID" \
@@ -223,6 +264,7 @@ bd create "US-001: Add status field to tasks table" \
 - Generate and run migration successfully
 - Typecheck passes"
 
+# All other stories use priority 2 (NOT incrementing!)
 bd create "US-002: Display status badge on task cards" \
   --type task \
   --parent "$EPIC_ID" \
@@ -236,7 +278,7 @@ bd create "US-002: Display status badge on task cards" \
 bd create "US-003: Add status toggle to task list rows" \
   --type task \
   --parent "$EPIC_ID" \
-  --priority 3 \
+  --priority 2 \
   --description "As a user, I want to change task status directly from the list." \
   --acceptance "- Each row has status dropdown or toggle
 - Changing status saves immediately
@@ -247,7 +289,7 @@ bd create "US-003: Add status toggle to task list rows" \
 bd create "US-004: Filter tasks by status" \
   --type task \
   --parent "$EPIC_ID" \
-  --priority 4 \
+  --priority 2 \
   --description "As a user, I want to filter the list to see only certain statuses." \
   --acceptance "- Filter dropdown: All | Pending | In Progress | Done
 - Filter persists in URL params
