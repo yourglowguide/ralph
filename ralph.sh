@@ -51,6 +51,20 @@ WORK_DIR="$(pwd)"
 ARCHIVE_DIR="$WORK_DIR/.ralph-archive"
 LAST_EPIC_FILE="$WORK_DIR/.ralph-epic"
 
+# Load .env file if it exists (for RALPH_BASE_BRANCH and other config)
+if [ -f "$WORK_DIR/.env" ]; then
+  # Only export lines that look like VAR=value (skip comments and empty lines)
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    # Skip comments and empty lines
+    [[ "$line" =~ ^[[:space:]]*# ]] && continue
+    [[ -z "$line" ]] && continue
+    # Only process lines with = that don't start with #
+    if [[ "$line" =~ ^[A-Za-z_][A-Za-z0-9_]*= ]]; then
+      export "$line"
+    fi
+  done < "$WORK_DIR/.env"
+fi
+
 # Function to get the active Ralph epic
 get_ralph_epic() {
   # Find epic with branchName in design field (marks it as a Ralph epic)
