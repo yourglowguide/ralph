@@ -162,9 +162,15 @@ fi
 # Track current epic
 echo "$EPIC_ID" > "$LAST_EPIC_FILE"
 
+# Determine base branch (user-provided or detect from remote)
+if [ -z "$RALPH_BASE_BRANCH" ]; then
+  RALPH_BASE_BRANCH=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@' || echo "main")
+fi
+
 # Export for agent use
 export RALPH_EPIC_ID="$EPIC_ID"
 export RALPH_BRANCH="$BRANCH"
+export RALPH_BASE_BRANCH="$RALPH_BASE_BRANCH"
 
 # Check for multiple open epics (warn user)
 EPIC_COUNT=$(bd list --type epic --status open --json 2>/dev/null | \
@@ -193,6 +199,7 @@ echo "Starting Ralph - Tool: $TOOL - Tasks: $TASK_COUNT - Max iterations: $MAX_I
 echo "Working directory: $WORK_DIR"
 echo "Epic: $EPIC_ID"
 echo "Branch: $BRANCH"
+echo "Base branch: $RALPH_BASE_BRANCH"
 
 for i in $(seq 1 $MAX_ITERATIONS); do
   echo ""
@@ -200,12 +207,30 @@ for i in $(seq 1 $MAX_ITERATIONS); do
   echo "  Ralph Iteration $i of $MAX_ITERATIONS ($TOOL)"
   echo "==============================================================="
 
-  # Run the selected tool with the ralph prompt
-  if [[ "$TOOL" == "amp" ]]; then
-    OUTPUT=$(RALPH_EPIC_ID="$EPIC_ID" RALPH_BRANCH="$BRANCH" cat "$PROMPT_FILE" | amp --dangerously-allow-all 2>&1 | tee /dev/stderr) || true
-  else
-    # Claude Code: use --dangerously-skip-permissions for autonomous operation, --print for output
-    OUTPUT=$(RALPH_EPIC_ID="$EPIC_ID" RALPH_BRANCH="$BRANCH" claude --dangerously-skip-permissions --print < "$CLAUDE_FILE" 2>&1 | tee /dev/stderr) || true
+  # Run the selected tool with the ralph prompt (with retry on transient failures)
+  RETRY_COUNT=0
+  MAX_RETRIES=2
+  OUTPUT=""
+
+  while [ $RETRY_COUNT -le $MAX_RETRIES ]; do
+    if [[ "$TOOL" == "amp" ]]; then
+      OUTPUT=$(RALPH_EPIC_ID="$EPIC_ID" RALPH_BRANCH="$BRANCH" RALPH_BASE_BRANCH="$RALPH_BASE_BRANCH" cat "$PROMPT_FILE" | amp --dangerously-allow-all 2>&1 | tee /dev/stderr) && break
+    else
+      # Claude Code: use --dangerously-skip-permissions for autonomous operation, --print for output
+      OUTPUT=$(RALPH_EPIC_ID="$EPIC_ID" RALPH_BRANCH="$BRANCH" RALPH_BASE_BRANCH="$RALPH_BASE_BRANCH" claude --dangerously-skip-permissions --print < "$CLAUDE_FILE" 2>&1 | tee /dev/stderr) && break
+    fi
+
+    RETRY_COUNT=$((RETRY_COUNT + 1))
+    if [ $RETRY_COUNT -le $MAX_RETRIES ]; then
+      echo ""
+      echo "⚠️  Tool crashed or returned error. Retry $RETRY_COUNT of $MAX_RETRIES in 5 seconds..."
+      sleep 5
+    fi
+  done
+
+  if [ $RETRY_COUNT -gt $MAX_RETRIES ]; then
+    echo ""
+    echo "⚠️  Tool failed after $MAX_RETRIES retries. Moving to next iteration..."
   fi
 
   # Sync beads after each iteration

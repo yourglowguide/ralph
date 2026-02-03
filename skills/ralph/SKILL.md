@@ -23,6 +23,7 @@ Ralph uses beads with this architecture:
 ```
 Epic: "Ralph: <project> - <description>"
   ├── metadata (design field): branchName: ralph/<feature-name>
+  │                            baseBranch: <base-branch>
   ├── Task: "Patterns & Memory" (priority 0, stays open)
   │     └── notes: "## Codebase Patterns\n\n(Patterns discovered during implementation)"
   ├── Task: "US-001: <title>" (priority 2)
@@ -78,11 +79,17 @@ Use these commands to create the Ralph structure:
 # Initialize beads if needed
 bd init 2>/dev/null || true
 
+# Determine base branch (use env var if set, otherwise detect from remote, fallback to main)
+BASE_BRANCH="${RALPH_BASE_BRANCH:-$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@' || echo 'main')}"
+
 # Create epic with branch metadata in design field
 EPIC_ID=$(bd create "Ralph: $PROJECT - $DESCRIPTION" \
   --type epic \
-  --design "branchName: ralph/$BRANCH_NAME" \
+  --design "branchName: ralph/$BRANCH_NAME
+baseBranch: $BASE_BRANCH" \
   --silent)
+
+echo "Base branch: $BASE_BRANCH"
 
 # Create patterns bead (priority 0 = never auto-picked by bd ready)
 bd create "Patterns & Memory" \
@@ -194,8 +201,9 @@ Frontend stories are NOT complete until visually verified. Ralph will use the de
    - Exception: Use priority 1 for critical foundational work (schema migrations)
    - Use dependencies (`--deps`) to enforce ordering, not priority values
 4. **branchName**: Derive from feature name, kebab-case, prefixed with `ralph/`
-5. **Always add**: "Typecheck passes" to every story's acceptance criteria
-6. **Always create**: A "Patterns & Memory" task with priority 0
+5. **baseBranch**: Detect from remote HEAD or use `$RALPH_BASE_BRANCH` if set (fallback to `main`)
+6. **Always add**: "Typecheck passes" to every story's acceptance criteria
+7. **Always create**: A "Patterns & Memory" task with priority 0
 
 ---
 
@@ -237,10 +245,16 @@ Add ability to mark tasks with different statuses.
 ```bash
 bd init 2>/dev/null || true
 
+# Determine base branch
+BASE_BRANCH="${RALPH_BASE_BRANCH:-$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@' || echo 'main')}"
+
 EPIC_ID=$(bd create "Ralph: TaskApp - Task Status Feature" \
   --type epic \
-  --design "branchName: ralph/task-status" \
+  --design "branchName: ralph/task-status
+baseBranch: $BASE_BRANCH" \
   --silent)
+
+echo "Base branch: $BASE_BRANCH"
 
 bd create "Patterns & Memory" \
   --type task \
@@ -346,6 +360,7 @@ This will create the equivalent beads structure and mark already-passed stories 
 Before running the bd commands, verify:
 
 - [ ] **Checked for existing Ralph epics** (close old ones if needed)
+- [ ] **Base branch detected/set correctly** (will be reported when creating epic)
 - [ ] Each story is completable in one iteration (small enough)
 - [ ] Stories are ordered by dependency (schema → backend → UI)
 - [ ] Every story has "Typecheck passes" as criterion

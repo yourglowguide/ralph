@@ -30,9 +30,13 @@ PROJECT=$(jq -r '.project // "Unknown"' "$PRD_FILE")
 DESCRIPTION=$(jq -r '.description // "Migrated from prd.json"' "$PRD_FILE")
 BRANCH_NAME=$(jq -r '.branchName // "ralph/migrated"' "$PRD_FILE")
 
+# Determine base branch (use env var if set, otherwise detect from remote, fallback to main)
+BASE_BRANCH="${RALPH_BASE_BRANCH:-$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@' || echo 'main')}"
+
 echo "Project: $PROJECT"
 echo "Description: $DESCRIPTION"
 echo "Branch: $BRANCH_NAME"
+echo "Base branch: $BASE_BRANCH"
 echo ""
 
 # Initialize beads if needed
@@ -58,7 +62,8 @@ fi
 echo "Creating epic..."
 EPIC_ID=$(bd create "Ralph: $PROJECT - $DESCRIPTION" \
   --type epic \
-  --design "branchName: $BRANCH_NAME" \
+  --design "branchName: $BRANCH_NAME
+baseBranch: $BASE_BRANCH" \
   --silent)
 
 echo "Created epic: $EPIC_ID"
