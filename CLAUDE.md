@@ -112,22 +112,28 @@ For any task that changes UI, verify it works in the browser if you have browser
 
 If no browser tools are available, note that manual browser verification is needed.
 
-## Stop Condition
+## Stop Condition (CRITICAL)
 
-After completing a task, check if ALL tasks in the epic are closed:
+After completing your ONE task, you MUST run this exact command and show its output:
 
 ```bash
 bd list --parent $RALPH_EPIC_ID --status open
 ```
 
-If NO open tasks remain, reply with:
-<promise>COMPLETE</promise>
+**Decision logic:**
+- If output shows **ZERO tasks** → reply with `<promise>COMPLETE</promise>`
+- If output shows **ANY tasks** → end your response normally (no promise!)
 
-If there are still open tasks, end your response normally (another iteration will pick up the next task).
+**IMPORTANT RULES:**
+1. You complete ONE task per iteration, not the entire epic
+2. NEVER summarize the full PRD as "completed work" - only report on YOUR single task
+3. NEVER output `<promise>COMPLETE</promise>` without first showing the `bd list` output
+4. If you did not run `bd list --status open`, you CANNOT claim completion
 
 ## Important
 
-- Work on ONE task per iteration
+- **Work on ONE task per iteration** - you have no memory between iterations, so finish and commit one task completely
+- Do NOT claim to have completed multiple tasks - you can only do ONE per iteration
 - Commit frequently
 - Keep CI green
 - Read the Patterns bead before starting

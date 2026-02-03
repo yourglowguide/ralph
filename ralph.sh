@@ -213,6 +213,21 @@ for i in $(seq 1 $MAX_ITERATIONS); do
 
   # Check for completion signal
   if echo "$OUTPUT" | grep -q "<promise>COMPLETE</promise>"; then
+    # VERIFY completion - don't trust the agent blindly
+    bd sync 2>/dev/null || true
+
+    REMAINING=$(bd list --parent "$EPIC_ID" --status open --json 2>/dev/null | \
+      jq -r '[.[] | select(.priority != 0 and .priority != "0")] | length' || echo "0")
+
+    if [ "$REMAINING" -gt 0 ]; then
+      echo ""
+      echo "⚠️  Agent claimed completion but $REMAINING tasks remain open!"
+      echo "Continuing iteration loop..."
+      echo "Iteration $i complete. Continuing..."
+      sleep 2
+      continue
+    fi
+
     echo ""
     echo "Ralph completed all tasks!"
     echo "Completed at iteration $i of $MAX_ITERATIONS"
