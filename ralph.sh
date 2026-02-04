@@ -223,26 +223,47 @@ for i in $(seq 1 $MAX_ITERATIONS); do
 
   # Run the selected tool with the ralph prompt (with retry on transient failures)
   RETRY_COUNT=0
-  MAX_RETRIES=2
+  MAX_RETRIES=3
   OUTPUT=""
+  TOOL_SUCCESS=false
 
-  while [ $RETRY_COUNT -le $MAX_RETRIES ]; do
+  while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+    RETRY_COUNT=$((RETRY_COUNT + 1))
+
+    # Run the tool and capture both output and exit code
+    set +e  # Temporarily allow errors
     if [[ "$TOOL" == "amp" ]]; then
-      OUTPUT=$(RALPH_EPIC_ID="$EPIC_ID" RALPH_BRANCH="$BRANCH" RALPH_BASE_BRANCH="$RALPH_BASE_BRANCH" cat "$PROMPT_FILE" | amp --dangerously-allow-all 2>&1 | tee /dev/stderr) && break
+      OUTPUT=$(RALPH_EPIC_ID="$EPIC_ID" RALPH_BRANCH="$BRANCH" RALPH_BASE_BRANCH="$RALPH_BASE_BRANCH" cat "$PROMPT_FILE" | amp --dangerously-allow-all 2>&1 | tee /dev/stderr)
     else
       # Claude Code: use --dangerously-skip-permissions for autonomous operation, --print for output
-      OUTPUT=$(RALPH_EPIC_ID="$EPIC_ID" RALPH_BRANCH="$BRANCH" RALPH_BASE_BRANCH="$RALPH_BASE_BRANCH" claude --dangerously-skip-permissions --print < "$CLAUDE_FILE" 2>&1 | tee /dev/stderr) && break
+      OUTPUT=$(RALPH_EPIC_ID="$EPIC_ID" RALPH_BRANCH="$BRANCH" RALPH_BASE_BRANCH="$RALPH_BASE_BRANCH" claude --dangerously-skip-permissions --print < "$CLAUDE_FILE" 2>&1 | tee /dev/stderr)
+    fi
+    EXIT_CODE=$?
+    set -e  # Re-enable exit on error
+
+    # Check for success: exit code 0 AND no "No messages returned" error
+    if [ $EXIT_CODE -eq 0 ] && ! echo "$OUTPUT" | grep -q "No messages returned"; then
+      TOOL_SUCCESS=true
+      break
     fi
 
-    RETRY_COUNT=$((RETRY_COUNT + 1))
-    if [ $RETRY_COUNT -le $MAX_RETRIES ]; then
+    # Determine failure reason for logging
+    if [ $EXIT_CODE -ne 0 ]; then
+      FAILURE_REASON="exit code $EXIT_CODE"
+    else
+      FAILURE_REASON="empty API response"
+    fi
+
+    if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+      # Exponential backoff: 5s, 10s, 20s
+      BACKOFF=$((5 * (2 ** (RETRY_COUNT - 1))))
       echo ""
-      echo "⚠️  Tool crashed or returned error. Retry $RETRY_COUNT of $MAX_RETRIES in 5 seconds..."
-      sleep 5
+      echo "⚠️  Tool failed ($FAILURE_REASON). Retry $RETRY_COUNT of $MAX_RETRIES in ${BACKOFF}s..."
+      sleep $BACKOFF
     fi
   done
 
-  if [ $RETRY_COUNT -gt $MAX_RETRIES ]; then
+  if [ "$TOOL_SUCCESS" = false ]; then
     echo ""
     echo "⚠️  Tool failed after $MAX_RETRIES retries. Moving to next iteration..."
   fi
@@ -276,8 +297,8 @@ for i in $(seq 1 $MAX_ITERATIONS); do
     exit 0
   fi
 
-  echo "Iteration $i complete. Continuing..."
-  sleep 2
+  echo "Iteration $i complete. Pausing before next iteration..."
+  sleep 5  # Brief cooldown between iterations to avoid rate limiting
 done
 
 echo ""
