@@ -22,7 +22,7 @@ ralph --tool amp [max_iterations]
 
 ## Key Files
 
-- `ralph.sh` - The bash loop that spawns fresh AI instances (supports `--tool amp` or `--tool claude`)
+- `ralph` - The bash loop that spawns fresh AI instances (supports `--tool amp` or `--tool claude`)
 - `prompt.md` - Instructions given to each AMP instance
 - `CLAUDE.md` - Instructions given to each Claude Code instance
 - `migrate-prd-to-beads.sh` - Migration script for converting prd.json to beads

@@ -313,7 +313,7 @@ bd create "US-004: Filter tasks by status" \
 bd sync
 
 echo "Created Ralph epic: $EPIC_ID"
-echo "Run 'ralph.sh' to start execution"
+echo "Run 'ralph' to start execution"
 ```
 
 ---
@@ -335,7 +335,7 @@ if [ -n "$EXISTING" ]; then
 fi
 ```
 
-**The ralph.sh script handles archiving automatically** when it detects a different epic, but you can manually archive with:
+**The ralph script handles archiving automatically** when it detects a different epic, but you can manually archive with:
 
 ```bash
 bd close <old-epic-id>

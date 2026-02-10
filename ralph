@@ -3,8 +3,8 @@
 # Usage: ralph [--tool amp|claude] [max_iterations]
 #
 # Global installation:
-#   1. Copy ralph.sh to ~/bin/ralph (or anywhere in PATH)
-#   2. Copy prompt.md and CLAUDE.md to ~/.config/ralph/
+#   1. Symlink ralph to ~/bin/ralph (or anywhere in PATH)
+#   2. Symlink prompt.md and CLAUDE.md to ~/.config/ralph/
 #   3. Run 'ralph' from any repo with a Ralph epic in beads
 
 set -e

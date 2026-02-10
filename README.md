@@ -33,9 +33,11 @@ npm install -g @anthropic-ai/claude-code  # Claude Code
 brew install jq                            # JSON processor
 # Install beads CLI from https://github.com/beads-project/beads
 
-# 2. Install Ralph globally
-cp ralph.sh ~/bin/ralph && chmod +x ~/bin/ralph
-mkdir -p ~/.config/ralph && cp prompt.md CLAUDE.md ~/.config/ralph/
+# 2. Install Ralph globally (symlinks so updates are automatic)
+mkdir -p ~/bin ~/.config/ralph ~/.claude/skills
+ln -sf $(pwd)/ralph ~/bin/ralph
+ln -sf $(pwd)/prompt.md ~/.config/ralph/prompt.md
+ln -sf $(pwd)/CLAUDE.md ~/.config/ralph/CLAUDE.md
 
 # 3. In your project root, create tasks with Claude Code
 cd ~/my-project  # Must be at repo root
@@ -88,21 +90,15 @@ Install Ralph once and use it with any repository:
 git clone git@github.com:yourglowguide/ralph.git
 cd ralph
 
-# 2. Copy the ralph command to your PATH
-cp ralph.sh ~/bin/ralph
-chmod +x ~/bin/ralph
+# 2. Symlink everything (updates automatically when you git pull)
+mkdir -p ~/bin ~/.config/ralph ~/.claude/skills
+ln -sf "$(pwd)/ralph" ~/bin/ralph
+ln -sf "$(pwd)/prompt.md" ~/.config/ralph/prompt.md
+ln -sf "$(pwd)/CLAUDE.md" ~/.config/ralph/CLAUDE.md
+ln -sf "$(pwd)/skills/prd" ~/.claude/skills/prd
+ln -sf "$(pwd)/skills/ralph" ~/.claude/skills/ralph
 
-# 3. Copy prompt templates to config directory
-mkdir -p ~/.config/ralph
-cp prompt.md ~/.config/ralph/
-cp CLAUDE.md ~/.config/ralph/
-
-# 4. (Optional) Install skills for Claude Code
-mkdir -p ~/.claude/skills
-cp -r skills/prd ~/.claude/skills/
-cp -r skills/ralph ~/.claude/skills/
-
-# 5. Verify installation
+# 3. Verify installation
 ralph --help  # Should show usage (or error about no epic)
 ```
 
@@ -460,9 +456,10 @@ bd --version
 
 **Solution:**
 ```bash
+cd /path/to/ralph
 mkdir -p ~/.config/ralph
-cp /path/to/ralph/prompt.md ~/.config/ralph/
-cp /path/to/ralph/CLAUDE.md ~/.config/ralph/
+ln -sf "$(pwd)/prompt.md" ~/.config/ralph/prompt.md
+ln -sf "$(pwd)/CLAUDE.md" ~/.config/ralph/CLAUDE.md
 ```
 
 ### Ralph keeps failing on the same task
@@ -564,7 +561,7 @@ A: Yes. Edit `~/.config/ralph/CLAUDE.md` (for Claude Code) or `~/.config/ralph/p
 
 **Q: Can I use Ralph with a different AI tool?**
 
-A: Currently Ralph supports Claude Code and Amp. Adding other tools requires modifying `ralph.sh`.
+A: Currently Ralph supports Claude Code and Amp. Adding other tools requires modifying the `ralph` script.
 
 **Q: Can I run Ralph on CI?**
 
