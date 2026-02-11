@@ -1,6 +1,6 @@
 #!/bin/bash
 # Ralph Wiggum - Long-running AI agent loop
-# Usage: ralph [--tool amp|claude] [max_iterations]
+# Usage: ralph [--help] [--tool amp|claude] [max_iterations]
 #
 # Global installation:
 #   1. Symlink ralph to ~/bin/ralph (or anywhere in PATH)
@@ -14,8 +14,53 @@ TOOL="claude"  # Default to Claude Code
 MAX_ITERATIONS=""  # Empty = auto-detect from task count
 USER_SET_ITERATIONS=false
 
+show_help() {
+  cat <<'EOF'
+Ralph - Autonomous AI agent loop for completing beads epics
+
+Usage: ralph [options] [max_iterations]
+
+Options:
+  --tool <amp|claude>   AI tool to use (default: claude)
+  --help                Show this help message
+
+Arguments:
+  max_iterations        Max iteration count (default: auto-detect from task count)
+
+Environment variables:
+  RALPH_BASE_BRANCH     Base branch for the feature (default: auto-detect from remote)
+  RALPH_CONFIG_DIR      Config directory (default: ~/.config/ralph)
+
+Prerequisites:
+  - bd (beads CLI) must be installed and in PATH
+  - An open Ralph epic with a branchName in its design field
+  - You must already be on the epic's feature branch (ralph will not create branches)
+
+Setup:
+  mkdir -p ~/.config/ralph
+  cp /path/to/ralph/prompt.md ~/.config/ralph/
+  cp /path/to/ralph/CLAUDE.md ~/.config/ralph/
+
+Workflow:
+  1. Create a PRD with /prd
+  2. Convert to beads with /ralph (creates epic + tasks)
+  3. Create and checkout the feature branch
+  4. Run: ralph
+
+Examples:
+  ralph                 Run with defaults (claude, auto iterations)
+  ralph 5               Run at most 5 iterations
+  ralph --tool amp      Use Amp instead of Claude Code
+  ralph --tool amp 3    Use Amp with max 3 iterations
+EOF
+  exit 0
+}
+
 while [[ $# -gt 0 ]]; do
   case $1 in
+    --help|-h)
+      show_help
+      ;;
     --tool)
       TOOL="$2"
       shift 2
@@ -179,6 +224,23 @@ echo "$EPIC_ID" > "$LAST_EPIC_FILE"
 # Determine base branch (user-provided or detect from remote)
 if [ -z "$RALPH_BASE_BRANCH" ]; then
   RALPH_BASE_BRANCH=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@' || echo "main")
+fi
+
+# Verify we're on the correct feature branch (Ralph does not create branches)
+CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
+
+if [ "$CURRENT_BRANCH" = "main" ] || [ "$CURRENT_BRANCH" = "dev" ]; then
+  echo "Error: Currently on '$CURRENT_BRANCH'. Ralph requires a feature branch."
+  echo "Switch to the feature branch first:"
+  echo "  git checkout $BRANCH"
+  exit 1
+fi
+
+if [ "$CURRENT_BRANCH" != "$BRANCH" ]; then
+  echo "Error: Current branch '$CURRENT_BRANCH' does not match epic branch '$BRANCH'."
+  echo "Switch to the correct branch:"
+  echo "  git checkout $BRANCH"
+  exit 1
 fi
 
 # Export for agent use

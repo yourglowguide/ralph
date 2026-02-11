@@ -11,7 +11,7 @@ Ralph provides these environment variables:
 ## Your Task
 
 1. **Get context from beads** (see commands below)
-2. Check you're on the correct branch (`$RALPH_BRANCH`). If not, check it out or create from main.
+2. Verify you're on the correct branch (`$RALPH_BRANCH`). If not, stop and report the error — do NOT create or switch branches.
 3. Read the Patterns bead first for codebase context
 4. Pick the **first ready task** (highest priority, not blocked)
 5. Implement that single task

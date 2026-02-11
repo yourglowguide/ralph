@@ -7,12 +7,12 @@ You are an autonomous coding agent working on a software project.
 Ralph provides these environment variables:
 - `RALPH_EPIC_ID` - The ID of the current Ralph epic in beads
 - `RALPH_BRANCH` - The git branch name for this feature
-- `RALPH_BASE_BRANCH` - The base branch to create feature branches from (defaults to detecting from remote, falls back to `main`)
+- `RALPH_BASE_BRANCH` - The base branch this feature branch was created from
 
 ## Your Task
 
 1. **Get context from beads** (see commands below)
-2. Check you're on the correct branch (`$RALPH_BRANCH`). If not, check it out or create from `$RALPH_BASE_BRANCH`.
+2. Verify you're on the correct branch (`$RALPH_BRANCH`). If not, stop and report the error — do NOT create or switch branches.
 3. Read the Patterns bead first for codebase context
 4. Pick the **first ready task** (highest priority, not blocked)
 5. Implement that single task
